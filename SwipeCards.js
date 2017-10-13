@@ -18,7 +18,6 @@ import clamp from 'clamp';
 import Defaults from './Defaults.js';
 
 const viewport = Dimensions.get('window')
-const SWIPE_THRESHOLD = 120;
 
 const styles = StyleSheet.create({
   container: {
@@ -86,6 +85,8 @@ export default class SwipeCards extends Component {
     stackDepth: React.PropTypes.number,
     stackOffsetX: React.PropTypes.number,
     stackOffsetY: React.PropTypes.number,
+    rotationLimit: React.PropTypes.number,
+    swipeThreshold: React.PropTypes.number,
     renderNoMoreCards: React.PropTypes.func,
     showYup: React.PropTypes.bool,
     showMaybe: React.PropTypes.bool,
@@ -117,6 +118,8 @@ export default class SwipeCards extends Component {
     stackDepth: 5,
     stackOffsetX: 25,
     stackOffsetY: 0,
+    rotationLimit: 30,
+    swipeThreshold: 120,
     showYup: true,
     showMaybe: true,
     showNope: true,
@@ -192,8 +195,8 @@ export default class SwipeCards extends Component {
           velocity = dx < 0 ? -3 : 3;
         }
 
-        const hasSwipedHorizontally = Math.abs(this.state.pan.x._value) > SWIPE_THRESHOLD
-        const hasSwipedVertically = Math.abs(this.state.pan.y._value) > SWIPE_THRESHOLD
+        const hasSwipedHorizontally = Math.abs(this.state.pan.x._value) > this.props.swipeThreshold
+        const hasSwipedVertically = Math.abs(this.state.pan.y._value) > this.props.swipeThreshold
         if (hasSwipedHorizontally || (hasSwipedVertically && this.props.hasMaybeAction)) {
 
           let cancelled = false;
@@ -414,7 +417,7 @@ export default class SwipeCards extends Component {
         let {pan} = this.state;
         let [translateX, translateY] = [pan.x, pan.y];
 
-        let rotate = pan.x.interpolate({ inputRange: [-200, 0, 200], outputRange: ["-30deg", "0deg", "30deg"] });
+        let rotate = pan.x.interpolate({ inputRange: [-200, 0, 200], outputRange: [`-${this.props.rotationLimit}deg`, "0deg", `${this.props.rotationLimit}deg`] });
         let opacity = this.props.smoothTransition ? 1 : pan.x.interpolate({ inputRange: [-200, 0, 200], outputRange: [0.5, 1, 0.5] });
 
         let animatedCardStyles = {
@@ -459,8 +462,8 @@ export default class SwipeCards extends Component {
   renderNope() {
     let {pan} = this.state;
 
-    let nopeOpacity = pan.x.interpolate({ inputRange: [-SWIPE_THRESHOLD, -(SWIPE_THRESHOLD/2)], outputRange: [1, 0], extrapolate: 'clamp' });
-    let nopeScale = pan.x.interpolate({ inputRange: [-SWIPE_THRESHOLD, 0], outputRange: [1, 0], extrapolate: 'clamp' });
+    let nopeOpacity = pan.x.interpolate({ inputRange: [-this.props.swipeThreshold, -(this.props.swipeThreshold/2)], outputRange: [1, 0], extrapolate: 'clamp' });
+    let nopeScale = pan.x.interpolate({ inputRange: [-this.props.swipeThreshold, 0], outputRange: [1, 0], extrapolate: 'clamp' });
     let animatedNopeStyles = { transform: [{ scale: nopeScale }], opacity: nopeOpacity };
 
     if (this.props.renderNope) {
@@ -486,8 +489,8 @@ export default class SwipeCards extends Component {
 
     let {pan} = this.state;
 
-    let maybeOpacity = pan.y.interpolate({ inputRange: [-SWIPE_THRESHOLD, -(SWIPE_THRESHOLD/2)], outputRange: [1, 0], extrapolate: 'clamp' });
-    let maybeScale = pan.x.interpolate({ inputRange: [-SWIPE_THRESHOLD, 0, SWIPE_THRESHOLD], outputRange: [0, 1, 0], extrapolate: 'clamp' });
+    let maybeOpacity = pan.y.interpolate({ inputRange: [-this.props.swipeThreshold, -(this.props.swipeThreshold/2)], outputRange: [1, 0], extrapolate: 'clamp' });
+    let maybeScale = pan.x.interpolate({ inputRange: [-this.props.swipeThreshold, 0, this.props.swipeThreshold], outputRange: [0, 1, 0], extrapolate: 'clamp' });
     let animatedMaybeStyles = { transform: [{ scale: maybeScale }], opacity: maybeOpacity };
 
     if (this.props.renderMaybe) {
@@ -512,8 +515,8 @@ export default class SwipeCards extends Component {
   renderYup() {
     let {pan} = this.state;
 
-    let yupOpacity = pan.x.interpolate({ inputRange: [(SWIPE_THRESHOLD/2), SWIPE_THRESHOLD], outputRange: [0, 1], extrapolate: 'clamp' });
-    let yupScale = pan.x.interpolate({ inputRange: [0, SWIPE_THRESHOLD], outputRange: [0.5, 1], extrapolate: 'clamp' });
+    let yupOpacity = pan.x.interpolate({ inputRange: [(this.props.swipeThreshold/2), this.props.swipeThreshold], outputRange: [0, 1], extrapolate: 'clamp' });
+    let yupScale = pan.x.interpolate({ inputRange: [0, this.props.swipeThreshold], outputRange: [0.5, 1], extrapolate: 'clamp' });
     let animatedYupStyles = { transform: [{ scale: yupScale }], opacity: yupOpacity };
 
     if (this.props.renderYup) {
